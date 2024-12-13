@@ -1,5 +1,6 @@
 package com.example.calculadorafinancieracolombia
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -30,7 +31,7 @@ import com.example.calculadorafinancieracolombia.ui.theme.CalculadoraFinancieraC
 import androidx.compose.runtime.setValue
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.OutlinedTextField
-
+import androidx.compose.runtime.mutableStateListOf
 
 
 class MainActivity : ComponentActivity() {
@@ -50,12 +51,16 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@SuppressLint("RememberReturnType")
 @Composable
 fun MainScreen(modifier: Modifier = Modifier) {
     // Lista de categorías para el DropdownMenu
     val categories = listOf("Productos", "Empleador", "Empleado")
     var selectedCategory by remember { mutableStateOf("Productos") }
     var result by remember { mutableStateOf("") }
+
+    // 1. Estado para historial de cálculos
+    val calculationHistory = remember { mutableStateListOf<String>() }
 
     Column(
         modifier = modifier
@@ -77,23 +82,38 @@ fun MainScreen(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Mostrar cálculos según la categoría seleccionada
+        // 2. Llamamos a las funciones de cálculo y agregamos el resultado a la lista
         when (selectedCategory) {
-            "Productos" -> ProductCalculations { result = it }
-            "Empleador" -> EmployerCalculations { result = it }
-            "Empleado" -> EmployeeCalculations { result = it }
+            "Productos" -> ProductCalculations { newResult ->
+                result = newResult
+                calculationHistory.add(newResult)
+            }
+            "Empleador" -> EmployerCalculations { newResult ->
+                result = newResult
+                calculationHistory.add(newResult)
+            }
+            "Empleado" -> EmployeeCalculations { newResult ->
+                result = newResult
+                calculationHistory.add(newResult)
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Mostrar el resultado
+        // Mostrar el último resultado
         Text(
             text = "Resultado: $result",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(top = 16.dp)
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 3. Mostrar el historial de cálculos
+        CalculationHistory(history = calculationHistory)
     }
 }
+
 
 @Composable
 fun CategorySelector(
@@ -459,5 +479,28 @@ fun EmployeeCalculations(onResult: (String) -> Unit) {
         }
     }
 }
+
+@Composable
+fun CalculationHistory(history: List<String>) {
+    // Si hay muchos resultados, se aconseja un LazyColumn
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .verticalScroll(rememberScrollState())
+    ) {
+        Text(
+            text = "Historial de Cálculos",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        history.forEachIndexed { index, item ->
+            Text(
+                text = "${index + 1}. $item",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+        }
+    }
+}
+
 
 
